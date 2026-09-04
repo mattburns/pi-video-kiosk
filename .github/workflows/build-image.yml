@@ -10,23 +10,11 @@ permissions:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    # Native arm64 runner: no qemu emulation (which is broken for trixie
+    # builds on x86 runners, see usimd/pi-gen-action#179) and ~10x faster.
+    runs-on: ubuntu-24.04-arm
     steps:
       - uses: actions/checkout@v4
-
-      # Free ~25GB by deleting large preinstalled toolchains. The action's own
-      # increase-runner-disk-size option apt-purges a hardcoded package list
-      # that has gone stale on current runner images and fails the job.
-      - name: Free runner disk space
-        run: |
-          sudo rm -rf /usr/local/lib/android /usr/share/dotnet /opt/ghc \
-            /usr/local/.ghcup /opt/hostedtoolcache/CodeQL
-          df -h /
-
-      # pi-gen builds arm64 under emulation; the runner needs qemu binfmt
-      # handlers registered or it aborts with "arm64: not supported".
-      - name: Register qemu binfmt handlers
-        run: docker run --privileged --rm tonistiigi/binfmt --install arm64
 
       - name: Build Raspberry Pi image
         id: build
