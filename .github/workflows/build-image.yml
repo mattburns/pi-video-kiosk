@@ -16,7 +16,7 @@ jobs:
 
       - name: Build Raspberry Pi image
         id: build
-        uses: usimd/pi-gen-action@v1
+        uses: usimd/pi-gen-action@v1.11.0
         with:
           image-name: pi-video-kiosk
           pi-gen-version: arm64
