@@ -23,6 +23,11 @@ jobs:
             /usr/local/.ghcup /opt/hostedtoolcache/CodeQL
           df -h /
 
+      # pi-gen builds arm64 under emulation; the runner needs qemu binfmt
+      # handlers registered or it aborts with "arm64: not supported".
+      - name: Register qemu binfmt handlers
+        run: docker run --privileged --rm tonistiigi/binfmt --install arm64
+
       - name: Build Raspberry Pi image
         id: build
         uses: usimd/pi-gen-action@v1.11.0
