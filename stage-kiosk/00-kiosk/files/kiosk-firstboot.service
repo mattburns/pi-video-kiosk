@@ -1,0 +1,11 @@
+[Unit]
+Description=Lock filesystem read-only on first boot
+ConditionKernelCommandLine=!overlayroot=tmpfs
+After=multi-user.target regenerate_ssh_host_keys.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/kiosk-firstboot.sh
+
+[Install]
+WantedBy=multi-user.target

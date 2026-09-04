@@ -1,0 +1,48 @@
+name: Build image
+
+on:
+  workflow_dispatch:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build Raspberry Pi image
+        id: build
+        uses: usimd/pi-gen-action@v1
+        with:
+          image-name: pi-video-kiosk
+          pi-gen-version: arm64
+          release: trixie
+          stage-list: stage0 stage1 stage2 ./stage-kiosk
+          export-last-stage-only: true
+          hostname: kiosk
+          username: pi
+          password: kiosk
+          disable-first-boot-user-rename: true
+          enable-ssh: 1
+          timezone: Etc/UTC
+          compression: xz
+          compression-level: 9
+          increase-runner-disk-size: true
+          verbose-output: true
+
+      - name: Upload image artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: pi-video-kiosk-image
+          path: ${{ steps.build.outputs.image-path }}
+
+      - name: Attach image to release
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: ${{ steps.build.outputs.image-path }}
+          generate_release_notes: true

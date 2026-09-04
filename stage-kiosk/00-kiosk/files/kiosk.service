@@ -1,0 +1,10 @@
+[Unit]
+Description=Video loop kiosk
+
+[Service]
+ExecStart=/usr/local/bin/kiosk-play.sh
+Restart=always
+RestartSec=2
+
+[Install]
+WantedBy=multi-user.target
