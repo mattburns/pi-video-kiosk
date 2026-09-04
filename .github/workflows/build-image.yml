@@ -14,6 +14,15 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # Free ~25GB by deleting large preinstalled toolchains. The action's own
+      # increase-runner-disk-size option apt-purges a hardcoded package list
+      # that has gone stale on current runner images and fails the job.
+      - name: Free runner disk space
+        run: |
+          sudo rm -rf /usr/local/lib/android /usr/share/dotnet /opt/ghc \
+            /usr/local/.ghcup /opt/hostedtoolcache/CodeQL
+          df -h /
+
       - name: Build Raspberry Pi image
         id: build
         uses: usimd/pi-gen-action@v1.11.0
@@ -31,7 +40,6 @@ jobs:
           timezone: Etc/UTC
           compression: xz
           compression-level: 9
-          increase-runner-disk-size: true
           verbose-output: true
 
       - name: Upload image artifact
