@@ -1,12 +1,25 @@
 name: Build image
 
+# Two kinds of release:
+#   - pushing a tag v1.2.3 publishes a versioned release
+#   - every push to main that changes the image rebuilds it and updates the
+#     rolling "latest" release (tag `latest`, moved to the new commit), so the
+#     "latest release" download link always has the current build
 on:
   workflow_dispatch:
   push:
     tags: ["v*"]
+    branches: [main]
+    paths:
+      - "stage-kiosk/**"
+      - ".github/workflows/build-image.yml"
 
 permissions:
   contents: write
+
+concurrency:
+  group: build-image-${{ github.ref }}
+  cancel-in-progress: false
 
 jobs:
   build:
@@ -41,9 +54,32 @@ jobs:
           name: pi-video-kiosk-image
           path: ${{ steps.build.outputs.image-path }}
 
-      - name: Attach image to release
+      - name: Attach image to versioned release
         if: startsWith(github.ref, 'refs/tags/')
         uses: softprops/action-gh-release@v2
         with:
           files: ${{ steps.build.outputs.image-path }}
           generate_release_notes: true
+          make_latest: true
+
+      - name: Move the "latest" tag to this commit
+        if: github.ref == 'refs/heads/main'
+        run: |
+          git tag -f latest "$GITHUB_SHA"
+          git push -f origin latest
+
+      - name: Update the rolling "latest" release
+        if: github.ref == 'refs/heads/main'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: latest
+          name: Latest build
+          target_commitish: ${{ github.sha }}
+          make_latest: true
+          overwrite_files: true
+          files: ${{ steps.build.outputs.image-path }}
+          body: |
+            Automatically built from the latest commit on `main`
+            (${{ github.sha }}): ${{ github.event.head_commit.message }}
+
+            Versioned releases are listed below it; this one always tracks `main`.
