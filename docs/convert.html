@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Video converter · Pi Video Kiosk</title>
+<meta name="description" content="Check and convert videos to Raspberry Pi friendly formats (4K HEVC, 1080p H.264) entirely in your browser. Nothing is uploaded.">
+<link rel="stylesheet" href="style.css">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Crect x='2' y='4' width='20' height='14' rx='2' fill='%23c51a4a'/%3E%3Cpath d='M10 8v6l5-3z' fill='white'/%3E%3C/svg%3E">
+</head>
+<body>
+<header class="site-header">
+  <div class="wrap">
+    <a class="brand" href="./">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2" y="4" width="20" height="14" rx="2" fill="#c51a4a"/><path d="M10 8v6l5-3z" fill="#fff"/></svg>
+      Pi Video Kiosk
+    </a>
+    <nav class="site-nav">
+      <a href="./">Home</a>
+      <a href="convert.html" aria-current="page">Video converter</a>
+      <a href="https://github.com/mattburns/pi-video-kiosk/releases/latest">Download image</a>
+      <a href="https://github.com/mattburns/pi-video-kiosk">GitHub</a>
+    </nav>
+  </div>
+</header>
+
+<main class="wrap">
+  <section class="hero" style="padding-bottom: 8px;">
+    <h1>Make your videos Pi-ready</h1>
+    <p class="lede">
+      Drop videos here. They're checked against what the Pi's hardware decoder can play, and anything that
+      would stutter is re-encoded to <strong>HEVC (H.265), up to 4K at 60 fps</strong>.
+      Everything runs in your browser using your machine's hardware encoder. Nothing is uploaded.
+    </p>
+  </section>
+
+  <div id="unsupported" class="callout bad hidden">
+    <strong>This browser can't convert video.</strong> It lacks the WebCodecs API, which this page uses for
+    decoding and encoding. Use a current Chrome, Edge or Safari. You can still drop files to <em>check</em> them.
+  </div>
+
+  <section style="margin-top: 16px;">
+    <label class="dropzone" id="dropzone" for="file-input">
+      <strong>Drop video files here, or click to choose</strong>
+      <span class="muted">MP4, MOV, MKV, WebM. Several at once is fine.</span>
+      <input id="file-input" type="file" accept="video/*,.mkv,.mov,.mp4,.m4v,.webm" multiple>
+    </label>
+
+    <div class="settings">
+      <div class="field">
+        <label for="preset">Output preset</label>
+        <select id="preset">
+          <option value="hevc-4k">Pi 4 / Pi 5 — HEVC, up to 4K 60 fps (recommended)</option>
+          <option value="hevc-1080">Pi 4 / Pi 5 — HEVC, 1080p (smaller files)</option>
+          <option value="h264-1080">Pi 3 / Zero 2 W — H.264, 1080p</option>
+        </select>
+        <p class="hint muted small" id="preset-hint"></p>
+      </div>
+      <div class="field">
+        <label>Your browser can encode</label>
+        <div class="caps" id="caps"><span class="pill">Checking…</span></div>
+        <p class="hint muted small" id="caps-hint"></p>
+      </div>
+    </div>
+  </section>
+
+  <section id="results" class="hidden">
+    <div class="toolbar">
+      <button class="btn primary" id="convert-all">Convert all flagged files</button>
+      <button class="btn" id="clear-all">Clear list</button>
+      <span class="spacer"></span>
+      <span class="muted small" id="save-mode"></span>
+    </div>
+    <div class="file-list" id="file-list"></div>
+  </section>
+
+  <section id="notes">
+    <h2>What this does</h2>
+    <ul>
+      <li><strong>Checks the codec and resolution</strong> of each file. HEVC at any size, and H.264 up to
+        1080p, decode in hardware on a Pi 4 / Pi 5 and are marked OK. Everything else (4K H.264, VP9, AV1,
+        ProRes…) is flagged.</li>
+      <li><strong>Re-encodes flagged files to HEVC in an MP4</strong> with a 2-second keyframe interval, which
+        keeps looping and seeking snappy in mpv. Resolution is capped at 4K and frame rate at 60 fps.
+        Nothing is ever <em>upscaled</em>: a 1080p 30 fps source stays 1080p 30 fps. Blowing it up to 4K 60
+        would only make the file bigger, and the kiosk outputs 1080p anyway.</li>
+      <li><strong>Audio is kept as is</strong> when the container allows it (AAC, MP3, Opus), otherwise it's
+        converted.</li>
+      <li><strong>Files that are already OK</strong> can still be converted if you want to shrink them or
+        normalise everything to one format.</li>
+    </ul>
+
+    <h3>Browser support</h3>
+    <p>
+      Encoding uses the browser's hardware encoder through the WebCodecs API. <strong>HEVC encoding</strong> is
+      available in Chrome and Edge on macOS and Windows with a recent GPU, and in Safari on Apple silicon. Firefox
+      and most Linux browsers can't encode HEVC; the page then falls back to H.264 at 1080p, which also plays
+      fine on the Pi. On Chrome and Edge the output streams straight to a file you pick; elsewhere it's held in
+      memory until the download, so keep very large files for a Chromium browser.
+    </p>
+
+    <h3>Tips</h3>
+    <ul>
+      <li>FAT32 sticks can't hold files over 4GB. Use exFAT for long 4K videos.</li>
+      <li>A 4K 60 fps HEVC file runs at roughly 30 Mbps, so about 13GB per hour. The 1080p HEVC preset is a
+        quarter of that and looks identical on the kiosk's 1080p output.</li>
+      <li>Expect conversion to run at a few times real time on a laptop with a hardware encoder.</li>
+      <li>Prefer the terminal? The repository's <code>scripts/check-video.sh</code> does the same check and prints
+        an <code>ffmpeg</code> command.</li>
+    </ul>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <a href="https://github.com/mattburns/pi-video-kiosk">pi-video-kiosk</a> is MIT licensed.
+    Conversion powered by <a href="https://mediabunny.dev/">Mediabunny</a>
+    (<a href="vendor/MEDIABUNNY-LICENSE">MPL-2.0</a>).
+  </div>
+</footer>
+
+<script type="module" src="convert.js"></script>
+</body>
+</html>
