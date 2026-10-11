@@ -5,6 +5,9 @@ rooms, lobbies, trade-show booths, digital signage.
 
 **Flash the image. Put videos on a USB stick. Plug into any TV. That's it.**
 
+🌐 **Website & browser-based video converter:
+[mattburns.github.io/pi-video-kiosk](https://mattburns.github.io/pi-video-kiosk/)**
+
 - Boots straight into fullscreen video in ~15 seconds — no desktop, no login
   prompt, no boot text
 - Videos loop forever; multiple files play as a playlist
@@ -45,11 +48,19 @@ The Pi's hardware video decoder supports:
 **4K H.264 files will play in slow motion** — no Raspberry Pi can
 hardware-decode them. Check your files before the event:
 
-```bash
-./scripts/check-video.sh myvideo.mp4
-```
+- **In the browser:** drop them on the
+  [video converter](https://mattburns.github.io/pi-video-kiosk/convert.html).
+  It flags problem files and re-encodes them to 4K HEVC using your machine's
+  hardware encoder (WebCodecs, via [Mediabunny](https://mediabunny.dev/)).
+  Nothing is uploaded. HEVC encoding needs Chrome/Edge on macOS or Windows,
+  or Safari on a Mac; other browsers fall back to 1080p H.264.
+- **On the command line:**
 
-It flags anything problematic and prints the exact `ffmpeg` re-encode command.
+  ```bash
+  ./scripts/check-video.sh myvideo.mp4
+  ```
+
+  It flags anything problematic and prints the exact `ffmpeg` re-encode command.
 
 ## SSH access (optional — you never need it)
 
@@ -113,6 +124,16 @@ DEPLOY_COMPRESSION=xz
 EOF
 ./build-docker.sh
 ```
+
+## Website
+
+The site in [docs/](docs/) is plain static HTML/JS, deployed to GitHub Pages by
+[.github/workflows/deploy-pages.yml](.github/workflows/deploy-pages.yml) on
+every push to `main` that touches `docs/`. The workflow enables Pages itself on
+first run; if that fails, set **Settings → Pages → Source** to *GitHub Actions*
+and re-run it. To work on it locally, serve the folder with any static server
+(e.g. `python3 -m http.server -d docs`). The converter must be served over
+HTTP, not opened as a `file://` URL, because it's an ES module.
 
 ## Hardware
 

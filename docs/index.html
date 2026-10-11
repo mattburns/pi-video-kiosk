@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pi Video Kiosk</title>
+<meta name="description" content="Turn a Raspberry Pi into a zero-maintenance video looper for a TV. Flash the image, put videos on a USB stick, plug into any TV.">
+<link rel="stylesheet" href="style.css">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Crect x='2' y='4' width='20' height='14' rx='2' fill='%23c51a4a'/%3E%3Cpath d='M10 8v6l5-3z' fill='white'/%3E%3C/svg%3E">
+</head>
+<body>
+<header class="site-header">
+  <div class="wrap">
+    <a class="brand" href="./">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2" y="4" width="20" height="14" rx="2" fill="#c51a4a"/><path d="M10 8v6l5-3z" fill="#fff"/></svg>
+      Pi Video Kiosk
+    </a>
+    <nav class="site-nav">
+      <a href="./" aria-current="page">Home</a>
+      <a href="convert.html">Video converter</a>
+      <a href="https://github.com/mattburns/pi-video-kiosk/releases/latest">Download image</a>
+      <a href="https://github.com/mattburns/pi-video-kiosk">GitHub</a>
+    </nav>
+  </div>
+</header>
+
+<main class="wrap">
+  <section class="hero">
+    <h1>A Raspberry Pi that just plays your videos. Forever.</h1>
+    <p class="lede">
+      Flash the image. Put videos on a USB stick. Plug the Pi into any TV.
+      Conference rooms, lobbies, trade-show booths, digital signage.
+    </p>
+    <div class="actions">
+      <a class="btn primary" href="https://github.com/mattburns/pi-video-kiosk/releases/latest">Download the SD card image</a>
+      <a class="btn" href="convert.html">Prepare your videos</a>
+    </div>
+  </section>
+
+  <section class="grid">
+    <div class="card">
+      <h3>Boots straight into video</h3>
+      <p class="muted">Fullscreen playback about 15 seconds after power-on. No desktop, no login prompt, no boot text.</p>
+    </div>
+    <div class="card">
+      <h3>USB stick = content</h3>
+      <p class="muted">Videos in the stick's root folder play as a looping playlist. Swap content with no laptop and no network.</p>
+    </div>
+    <div class="card">
+      <h3>Unplug it any time</h3>
+      <p class="muted">The filesystem locks itself read-only on first boot, so cutting power can never corrupt the SD card.</p>
+    </div>
+    <div class="card">
+      <h3>4K HEVC in hardware</h3>
+      <p class="muted">Hardware-accelerated playback up to 4K HEVC on Pi 4 and Pi 5. 1080p H.264 plays fine too.</p>
+    </div>
+  </section>
+
+  <section id="quick-start">
+    <h2>Quick start</h2>
+    <ol>
+      <li>Download <code>pi-video-kiosk.img.xz</code> from the
+        <a href="https://github.com/mattburns/pi-video-kiosk/releases/latest">latest release</a>.</li>
+      <li>Flash it to a microSD card (4GB or more) with
+        <a href="https://www.raspberrypi.com/software/">Raspberry Pi Imager</a>: choose
+        <strong>Use custom</strong> and pick the downloaded file. Skip the OS customisation dialog and apply no settings.</li>
+      <li>Copy your videos (<code>.mp4</code>, <code>.mkv</code>, <code>.mov</code>) onto a USB stick
+        (FAT32 or exFAT), root folder, and plug it into the Pi.
+        Not sure they'll play smoothly? <a href="convert.html">Check and convert them here</a>.</li>
+      <li>Insert the SD card, connect the TV via HDMI, and power on.</li>
+    </ol>
+    <div class="callout">
+      The <strong>first boot takes 2 to 3 minutes</strong>. It resizes the filesystem to fit your card, then locks it
+      read-only, rebooting a couple of times along the way. Every boot after that goes straight to video in about
+      15 seconds. A built-in welcome video plays if no USB stick is present.
+    </div>
+    <p>To change videos: swap the USB stick contents and power-cycle the Pi.</p>
+  </section>
+
+  <section id="formats">
+    <h2>Video format: read this if playback stutters</h2>
+    <p>The Pi's hardware video decoder supports:</p>
+    <table>
+      <thead><tr><th>Codec</th><th>Max smooth resolution</th></tr></thead>
+      <tbody>
+        <tr><td>H.264 / AVC</td><td>1080p</td></tr>
+        <tr><td>H.265 / HEVC</td><td>4K (2160p)</td></tr>
+      </tbody>
+    </table>
+    <p>
+      <strong>4K H.264 files will play in slow motion.</strong> No Raspberry Pi can hardware-decode them.
+      The <a href="convert.html">video converter</a> on this site checks your files in the browser and
+      re-encodes anything problematic to 4K HEVC. Nothing is uploaded; the work happens on your own machine.
+    </p>
+    <p class="muted small">
+      Prefer the command line? <code>scripts/check-video.sh myvideo.mp4</code> in the repository flags problem
+      files and prints the exact <code>ffmpeg</code> re-encode command.
+    </p>
+  </section>
+
+  <section id="how">
+    <h2>How it works</h2>
+    <ul>
+      <li>Raspberry Pi OS Lite (64-bit) built with <a href="https://github.com/RPi-Distro/pi-gen">pi-gen</a>
+        via a custom stage.</li>
+      <li>A systemd service runs <a href="https://mpv.io/">mpv</a> directly on KMS/DRM with hardware decoding.
+        No X11 or Wayland.</li>
+      <li>Output is pinned to 1080p. 4K <em>output</em> drops frames on the Pi's GPU render path even when
+        <em>decode</em> is hardware-accelerated, and TVs upscale 1080p invisibly. Your 4K HEVC files still
+        decode in hardware and look great.</li>
+      <li>On first boot the root filesystem becomes a tmpfs overlay, so all writes go to RAM.</li>
+      <li>USB detection happens at boot: a stick with videos wins, otherwise the built-in videos play.</li>
+    </ul>
+    <p>SSH access, persistent changes, and building the image yourself are covered in the
+      <a href="https://github.com/mattburns/pi-video-kiosk#readme">README</a>.</p>
+  </section>
+
+  <section id="hardware">
+    <h2>Hardware</h2>
+    <p>Tested on Raspberry Pi 5. Should work on Pi 4 (same KMS/DRM and hardware HEVC path).
+      Pi 3 and Zero 2 W will handle 1080p H.264 but not HEVC 4K.</p>
+    <p>You'll need: Pi and official power supply, microSD card, micro-HDMI to HDMI cable (Pi 4/5),
+      and optionally a USB stick for content.</p>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <a href="https://github.com/mattburns/pi-video-kiosk">pi-video-kiosk</a> is MIT licensed.
+  </div>
+</footer>
+</body>
+</html>
