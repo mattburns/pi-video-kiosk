@@ -43,8 +43,8 @@
       <p class="muted">Fullscreen playback about 15 seconds after power-on. No desktop, no login prompt, no boot text.</p>
     </div>
     <div class="card">
-      <h3>USB stick = content</h3>
-      <p class="muted">Videos in the stick's root folder play as a looping playlist. Swap content with no laptop and no network.</p>
+      <h3>USB stick or SD card</h3>
+      <p class="muted">Videos in a USB stick's root folder play as a looping playlist. No stick? The SD card has a VIDEOS drive your computer can see.</p>
     </div>
     <div class="card">
       <h3>Unplug it any time</h3>
@@ -64,17 +64,22 @@
       <li>Flash it to a microSD card (4GB or more) with
         <a href="https://www.raspberrypi.com/software/">Raspberry Pi Imager</a>: choose
         <strong>Use custom</strong> and pick the downloaded file. Skip the OS customisation dialog and apply no settings.</li>
-      <li>Copy your videos (<code>.mp4</code>, <code>.mkv</code>, <code>.mov</code>) onto a USB stick
-        (FAT32 or exFAT), root folder, and plug it into the Pi.
-        Not sure they'll play smoothly? <a href="convert.html">Check and convert them here</a>.</li>
       <li>Insert the SD card, connect the TV via HDMI, and power on.</li>
+      <li>Add your videos (<code>.mp4</code>, <code>.mkv</code>, <code>.mov</code>), either way:
+        <ul>
+          <li><strong>USB stick</strong> (FAT32 or exFAT): put them in the stick's root folder and plug it into the Pi.</li>
+          <li><strong>On the SD card itself:</strong> after the first boot, put the card back in your computer.
+            A <strong>VIDEOS</strong> drive appears; copy the videos into it.</li>
+        </ul>
+        Not sure they'll play smoothly? <a href="convert.html">Check and convert them here</a>.</li>
     </ol>
     <div class="callout">
-      The <strong>first boot takes 2 to 3 minutes</strong>. It resizes the filesystem to fit your card, then locks it
-      read-only, rebooting a couple of times along the way. Every boot after that goes straight to video in about
-      15 seconds. A built-in welcome video plays if no USB stick is present.
+      The <strong>first boot takes 2 to 3 minutes</strong>. It grows the root filesystem, creates the VIDEOS
+      partition from the rest of the card, locks the system read-only and reboots once. Every boot after that goes
+      straight to video in about 15 seconds. A built-in welcome video plays until you add your own.
     </div>
-    <p>To change videos: swap the USB stick contents and power-cycle the Pi.</p>
+    <p>To change videos: swap the USB stick contents (or the files on the VIDEOS drive) and power-cycle the Pi.
+      If both are present, the USB stick wins and the SD card's videos are ignored.</p>
   </section>
 
   <section id="formats">
@@ -108,8 +113,11 @@
       <li>Output is pinned to 1080p. 4K <em>output</em> drops frames on the Pi's GPU render path even when
         <em>decode</em> is hardware-accelerated, and TVs upscale 1080p invisibly. Your 4K HEVC files still
         decode in hardware and look great.</li>
-      <li>On first boot the root filesystem becomes a tmpfs overlay, so all writes go to RAM.</li>
-      <li>USB detection happens at boot: a stick with videos wins, otherwise the built-in videos play.</li>
+      <li>On first boot the root partition grows to 4 GiB and the rest of the card becomes an exFAT partition
+        labelled VIDEOS (no 4 GB file-size limit). Then the root filesystem becomes a tmpfs overlay, so all writes go
+        to RAM. Cards under about 5 GB get no VIDEOS partition.</li>
+      <li>Content detection happens at boot: a USB stick with videos wins, then the VIDEOS partition, then the
+        built-in welcome video. Removable sources are mounted read-only.</li>
     </ul>
     <p>SSH access, persistent changes, and building the image yourself are covered in the
       <a href="https://github.com/mattburns/pi-video-kiosk#readme">README</a>.</p>
@@ -119,8 +127,8 @@
     <h2>Hardware</h2>
     <p>Tested on Raspberry Pi 5. Should work on Pi 4 (same KMS/DRM and hardware HEVC path).
       Pi 3 and Zero 2 W will handle 1080p H.264 but not HEVC 4K.</p>
-    <p>You'll need: Pi and official power supply, microSD card, micro-HDMI to HDMI cable (Pi 4/5),
-      and optionally a USB stick for content.</p>
+    <p>You'll need: Pi and official power supply, microSD card (8 GB or more to keep videos on the card),
+      micro-HDMI to HDMI cable (Pi 4/5), and optionally a USB stick for content.</p>
   </section>
 </main>
 
