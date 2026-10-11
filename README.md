@@ -116,9 +116,11 @@ sudo raspi-config nonint enable_overlayfs && sudo reboot
 ## Building the image yourself
 
 GitHub Actions builds it (see
-[.github/workflows/build-image.yml](.github/workflows/build-image.yml)) —
-fork the repo and run the **Build image** workflow, or locally on any Linux
-box with Docker:
+[.github/workflows/build-image.yml](.github/workflows/build-image.yml)).
+Every push to `main` that touches `stage-kiosk/` rebuilds the image and
+updates the rolling **Latest build** release (tag `latest`); pushing a `v*`
+tag publishes a versioned release. Fork the repo and run the **Build image**
+workflow, or build locally on any Linux box with Docker:
 
 ```bash
 git clone --branch arm64 https://github.com/RPi-Distro/pi-gen
