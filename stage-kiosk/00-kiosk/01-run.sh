@@ -13,8 +13,12 @@ systemctl enable kiosk.service kiosk-firstboot.service
 systemctl disable getty@tty1.service
 EOF
 
-# Quiet boot: no console blanking, no boot text, no cursor, no rainbow splash
 CMDLINE="${ROOTFS_DIR}/boot/firmware/cmdline.txt"
+# Stock Pi OS grows the root partition to fill the card on first boot (the
+# ` resize` keyword, handled in the initramfs). kiosk-firstboot.sh does its own
+# partitioning instead, leaving room for a VIDEOS data partition.
+sed -i '1s/ resize$//; 1s/ resize / /' "${CMDLINE}"
+# Quiet boot: no console blanking, no boot text, no cursor, no rainbow splash
 sed -i '1s/$/ consoleblank=0 quiet loglevel=3 logo.nologo vt.global_cursor_default=0/' "${CMDLINE}"
 CONFIG="${ROOTFS_DIR}/boot/firmware/config.txt"
 grep -q '^disable_splash=1' "${CONFIG}" || echo 'disable_splash=1' >> "${CONFIG}"
