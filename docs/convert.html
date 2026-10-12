@@ -55,6 +55,12 @@
           <option value="h264-1080">Pi 3 / Zero 2 W — H.264, 1080p</option>
         </select>
         <p class="hint muted small" id="preset-hint"></p>
+        <label for="fps-cap" style="margin-top:12px">Frame rate cap</label>
+        <select id="fps-cap">
+          <option value="60">Keep up to 60 fps</option>
+          <option value="30">Limit to 30 fps (half the decode load and file size)</option>
+        </select>
+        <p class="hint muted small">Never raises the frame rate. Try 30 fps if 4K 60 fps files stutter on your Pi.</p>
       </div>
       <div class="field">
         <label>Your browser can encode</label>

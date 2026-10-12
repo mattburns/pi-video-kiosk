@@ -70,6 +70,21 @@ hardware-decode them. Check your files before the event:
 
   It flags anything problematic and prints the exact `ffmpeg` re-encode command.
 
+## Troubleshooting playback (no SSH needed)
+
+Put these next to your videos (USB stick root or the `VIDEOS` partition) and
+power-cycle:
+
+- **`kiosk-debug`** (an empty file): mpv writes a verbose log to the SD card's
+  boot partition as `kiosk-mpv.log`, which any computer can read. Look for
+  `Using hardware decoding` (good) or a software-decoder fallback (slow).
+- **`mpv.conf`**: extra mpv options applied on top of the kiosk's defaults,
+  one per line, e.g. `hwdec=drm-copy` or `hwdec=auto`. Handy for trying
+  decoder settings without reflashing.
+
+If a 4K 60 fps HEVC file stutters, re-encode it with the converter's
+**30 fps** cap (halves the decode load) or the 1080p HEVC preset.
+
 ## SSH access (optional — you never need it)
 
 The Pi joins ethernet automatically as `kiosk.local`:
