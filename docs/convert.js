@@ -77,6 +77,7 @@ const $ = (sel) => document.querySelector(sel);
 const dropzone = $('#dropzone');
 const fileInput = $('#file-input');
 const presetSel = $('#preset');
+const fpsCapSel = $('#fps-cap');
 const presetHint = $('#preset-hint');
 const capsEl = $('#caps');
 const capsHint = $('#caps-hint');
@@ -124,6 +125,7 @@ async function detectCaps() {
 
 function updatePresetHint() { presetHint.textContent = PRESETS[presetSel.value].hint; }
 presetSel.addEventListener('change', () => { updatePresetHint(); for (const e of entries) refreshPlan(e); });
+fpsCapSel.addEventListener('change', () => { for (const e of entries) refreshPlan(e); });
 updatePresetHint();
 detectCaps();
 
@@ -277,7 +279,7 @@ function planFor(entry) {
     height = Math.round(height * scale / 2) * 2;
   }
   const srcFps = info.fps || 30;
-  const fps = Math.min(srcFps, preset.maxFps);
+  const fps = Math.min(srcFps, preset.maxFps, Number(fpsCapSel.value) || 60);
   const bitrate = targetBitrate(codec, width, height, fps);
 
   // A file the Pi already plays fine keeps its video stream unless the user
