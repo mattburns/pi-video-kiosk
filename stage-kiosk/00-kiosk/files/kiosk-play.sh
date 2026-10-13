@@ -46,21 +46,40 @@ fi
 # to software, which plays 4K in slow motion. Try the explicit names first.
 # framedrop=decoder+vo keeps playback on time (dropping frames) if a file is
 # too heavy, instead of slow motion.
-FLAGS="--vo=gpu --gpu-context=drm --hwdec=drm,drm-copy,auto --framedrop=decoder+vo --fs --loop-playlist=inf --no-osc --no-input-default-bindings --really-quiet"
+FLAGS="--vo=gpu --gpu-context=drm --hwdec=drm,drm-copy,auto --framedrop=decoder+vo --fs --loop-playlist=inf --no-osc --no-input-default-bindings"
+QUIET="--really-quiet"
+
+# Debugging without SSH: an empty file called kiosk-debug next to the videos
+# makes the kiosk write kiosk-info.txt (versions, available decoders) and a
+# verbose mpv log, kiosk-mpv.log, to the SD card's boot partition, readable on
+# any computer. Opt-in because it writes to the boot partition. The partition
+# is remounted with "sync" and flushed every few seconds so the log survives
+# pulling the power, which is how kiosks get switched off.
+if [ -e "$DIR/kiosk-debug" ] || [ -e "$DIR/kiosk-debug.txt" ]; then
+  BOOT=/boot/firmware
+  mount -o remount,rw,sync "$BOOT" 2>/dev/null
+  {
+    echo "== $(date) =="
+    echo "content dir: $DIR"; ls -l "$DIR"
+    echo; echo "== uname =="; uname -a
+    echo; echo "== mpv =="; mpv --version 2>&1 | head -3
+    echo; echo "== mpv hwdec list =="; mpv --hwdec=help 2>&1
+    echo; echo "== ffmpeg hwaccels =="; ffmpeg -hide_banner -hwaccels 2>&1
+    echo; echo "== video devices =="; ls -l /dev/video* /dev/dri 2>&1
+    echo; echo "== kernel video decoder messages =="; dmesg 2>/dev/null | grep -i -E 'hevc|rpivid|v4l2|codec' | tail -20
+    echo; echo "== mpv.conf =="; cat "$DIR/mpv.conf" 2>/dev/null || echo "(none)"
+  } > "$BOOT/kiosk-info.txt" 2>&1
+  sync
+  QUIET="--msg-level=all=v --log-file=$BOOT/kiosk-mpv.log"
+  ( while sleep 5; do sync; done ) &
+fi
 
 # Tuning without SSH: an mpv.conf next to the videos (USB stick or VIDEOS
 # partition) is applied on top of the flags above, e.g. "hwdec=drm-copy".
 [ -f "$DIR/mpv.conf" ] && FLAGS="$FLAGS --include=$DIR/mpv.conf"
-# Debugging without SSH: an empty file called kiosk-debug next to the videos
-# makes mpv write a verbose log to the SD card's boot partition, readable on
-# any computer as kiosk-mpv.log. Opt-in because it writes to the boot partition.
-if [ -e "$DIR/kiosk-debug" ] || [ -e "$DIR/kiosk-debug.txt" ]; then
-  mount -o remount,rw /boot/firmware 2>/dev/null
-  FLAGS="$FLAGS --log-file=/boot/firmware/kiosk-mpv.log"
-fi
 
 # 4K output overwhelms the Pi's GPU render path even with hardware decode;
 # 1080p output is smooth and the TV upscales it invisibly.
-mpv $FLAGS --drm-mode=1920x1080 "$DIR"/*
+mpv $FLAGS $QUIET --drm-mode=1920x1080 "$DIR"/*
 # Fallback for displays with no 1080p mode: let mpv pick automatically.
-exec mpv $FLAGS "$DIR"/*
+exec mpv $FLAGS $QUIET "$DIR"/*

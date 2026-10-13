@@ -75,9 +75,12 @@ hardware-decode them. Check your files before the event:
 Put these next to your videos (USB stick root or the `VIDEOS` partition) and
 power-cycle:
 
-- **`kiosk-debug`** (an empty file): mpv writes a verbose log to the SD card's
-  boot partition as `kiosk-mpv.log`, which any computer can read. Look for
-  `Using hardware decoding` (good) or a software-decoder fallback (slow).
+- **`kiosk-debug`** (an empty file): the kiosk writes `kiosk-info.txt`
+  (versions, available hardware decoders) and a verbose mpv log,
+  `kiosk-mpv.log`, to the SD card's boot partition (the `bootfs` volume),
+  which any computer can read. Look for `Using hardware decoding` (good) or
+  a software-decoder fallback (slow). Let it play for a minute before
+  pulling the power.
 - **`mpv.conf`**: extra mpv options applied on top of the kiosk's defaults,
   one per line, e.g. `hwdec=drm-copy` or `hwdec=auto`. Handy for trying
   decoder settings without reflashing.
